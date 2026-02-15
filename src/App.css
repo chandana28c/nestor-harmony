@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .app-layout {
     min-height: 100vh;
     padding-bottom: 80px;
@@ -125,3 +126,11 @@
 .success-btn {
     color: var(--color-success);
 }
+=======
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+>>>>>>> 7ca960b70de2bc3c91c83e65f73047b5e02c39ac

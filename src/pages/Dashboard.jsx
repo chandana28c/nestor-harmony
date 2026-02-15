@@ -1,24 +1,34 @@
 import React from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import OverallReadiness from '@/components/dashboard/OverallReadiness';
+import SkillRadar from '@/components/dashboard/SkillRadar';
+import ContinuePractice from '@/components/dashboard/ContinuePractice';
+import WeeklyGoals from '@/components/dashboard/WeeklyGoals';
+import UpcomingAssessments from '@/components/dashboard/UpcomingAssessments';
 
 const Dashboard = () => {
     return (
-        <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Overview</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900">Progress</h3>
-                    <p className="mt-2 text-3xl font-bold text-primary">65%</p>
-                    <p className="text-sm text-gray-500">Course completion</p>
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <div className="col-span-4 lg:col-span-3">
+                    <OverallReadiness />
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900">Practice Problems</h3>
-                    <p className="mt-2 text-3xl font-bold text-primary">42</p>
-                    <p className="text-sm text-gray-500">Solved this week</p>
+                <div className="col-span-4 lg:col-span-4">
+                    <SkillRadar />
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900">Assessments</h3>
-                    <p className="mt-2 text-3xl font-bold text-primary">3</p>
-                    <p className="text-sm text-gray-500">Pending review</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="col-span-1">
+                    <ContinuePractice />
+                </div>
+                <div className="col-span-1">
+                    <WeeklyGoals />
+                </div>
+                <div className="col-span-1 md:col-span-2 lg:col-span-1">
+                    <UpcomingAssessments />
                 </div>
             </div>
         </div>
