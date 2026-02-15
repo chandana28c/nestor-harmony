@@ -40,7 +40,9 @@ const DashboardLayout = () => {
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="h-16 border-b flex items-center justify-between px-6">
-          <h2 className="text-lg font-semibold text-foreground">Placement Prep</h2>
+          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+            Nestor Harmony <span className="text-xs text-muted-foreground ml-2 border border-primary/20 px-1 rounded">v2.1 (Logic Upgraded)</span>
+          </h1>
           <Avatar className="h-9 w-9">
             <AvatarFallback className="bg-primary text-primary-foreground text-sm">
               U
