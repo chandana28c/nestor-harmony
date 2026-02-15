@@ -32,12 +32,12 @@ const App = () => (
             <Route path="history" element={<History />} />
             <Route path="results" element={<Results />} />
             <Route path="profile" element={<Profile />} />
-          </Route>
+          </Route >
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+        </Routes >
+      </BrowserRouter >
+    </TooltipProvider >
+  </QueryClientProvider >
 );
 
 export default App;
