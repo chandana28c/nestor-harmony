@@ -1,25 +1,7 @@
-<<<<<<< HEAD
-=======
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
->>>>>>> 7ca960b70de2bc3c91c83e65f73047b5e02c39ac
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-<<<<<<< HEAD
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-=======
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -81,10 +63,14 @@ body {
     line-height: 1.6;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Inter', sans-serif;
     font-weight: 700;
     line-height: 1.2;
   }
 }
->>>>>>> 7ca960b70de2bc3c91c83e65f73047b5e02c39ac
