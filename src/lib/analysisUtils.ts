@@ -57,15 +57,14 @@ export const analyzeJD = (jdText: string, company: string = '', role: string = '
         });
     });
 
-    // If no skills found, add a general fallback or handle externally.
-    // Requirement says: "If JD includes none, still show 'General fresher stack'." 
-    // We'll handle this in the UI or generators, but having an empty list is valid state.
+    // If no skills found, still show "General fresher stack" implies we don't fail, just return empty skills or handle in generation.
 
     // 2. Readiness Score Calculation
     let score = 35; // Base
     const categoriesPresent = new Set(extractedSkills.map(s => s.category));
     score += categoriesPresent.size * 5; // +5 per category
-    if (score > 35 + (6 * 5)) score = 35 + 30; // Max category bonus is 30? Wait. "Max 30" -> yes. 6 cats * 5 = 30.
+
+    // Cap category bonus at 30? logic: 6 categories * 5 = 30. So max bonus is naturally 30.
 
     if (company.trim()) score += 10;
     if (role.trim()) score += 10;
@@ -95,51 +94,57 @@ export const analyzeJD = (jdText: string, company: string = '', role: string = '
         questions
     };
 
-    // Save automatically? The prompt says "On Analyze, store an entry".
-    // We can call save here or let the UI call it. Let's provide a save function and call it from the UI.
-    // Actually, let's keep this pure and return the result.
     return result;
 };
 
 const generateChecklist = (skills: Skill[]): ChecklistRound[] => {
-    // Template-based rounds
+    // Helper to get skills by category
+    const getSkills = (cat: string) => skills.filter(s => s.category === cat).map(s => s.name);
+
+    const dsaSkills = getSkills('Core CS');
+    const langSkills = getSkills('Languages');
+
     return [
         {
             roundName: "Round 1: Aptitude & Basics",
             topics: [
-                "Quantitative Aptitude (Time, Work, Speed)",
-                "Logical Reasoning (Puzzles, Series)",
-                "Verbal Ability (Reading Comprehension)",
-                "Basic Programming Output questions (C/Java/Python)",
-                "Resume Walkthrough Preparation"
+                "Quantitative Aptitude (Time, Work, Speed, Profit/Loss)",
+                "Logical Reasoning (Puzzles, Blood Relations, Series)",
+                "Verbal Ability (Reading Comprehension, Grammar)",
+                `Basic Programming Output questions (${langSkills.length > 0 ? langSkills.slice(0, 2).join('/') : 'C/Java/Python'})`,
+                "Resume Walkthrough Preparation",
+                "Email Writing / Basic Communication Check"
             ]
         },
         {
             roundName: "Round 2: DSA & Core CS",
             topics: [
-                "Arrays, Strings, and Linked Lists",
+                "Arrays, Strings, and Linked Lists (Must Do)",
                 "Stacks, Queues, and Recursion",
                 "Time Complexity Analysis (Big O)",
-                "Basic Trees and Graphs",
-                "OOP Concepts (Polymorphism, Inheritance)"
+                dsaSkills.length > 0 ? `Revise ${dsaSkills.slice(0, 2).join(', ')}` : "Basic Trees and Graphs",
+                "OOP Concepts (Polymorphism, Inheritance, Encapsulation)",
+                "Operating Systems: Process vs Thread, Deadlocks"
             ]
         },
         {
             roundName: "Round 3: Technical Interview",
             topics: [
-                "Deep dive into Projects",
-                `System Design Basics${skills.some(s => s.category === 'Web') ? ' (Web Architecture)' : ''}`,
+                "Deep dive into Resume Projects",
+                `System Design Basics${skills.some(s => s.category === 'Web') ? ' (Web Architecture, API Design)' : ''}`,
                 ...skills.slice(0, 3).map(s => `Explain ${s.name} concepts in depth`),
                 "Database Normalization & ACID Properties",
-                "Live Coding (1-2 medium problems)"
+                "Live Coding (1-2 medium problems)",
+                "Code Quality & Optimization discussion"
             ]
         },
         {
             roundName: "Round 4: Managerial / HR",
             topics: [
-                "Why this company?",
-                "Strengths and Weaknesses",
+                "Why do you want to join this company?",
+                "Strengths and Weaknesses (be honest but strategic)",
                 "Situation-based questions (STAR method)",
+                "Where do you see yourself in 5 years?",
                 "Salary expectations & Negotiation",
                 "Questions for the interviewer"
             ]
@@ -151,6 +156,7 @@ const generatePlan = (skills: Skill[]): PlanDay[] => {
     const hasWeb = skills.some(s => s.category === 'Web');
     const hasData = skills.some(s => s.category === 'Data');
     const hasCloud = skills.some(s => s.category === 'Cloud/DevOps');
+    const hasTesting = skills.some(s => s.category === 'Testing');
 
     return [
         {
@@ -158,9 +164,9 @@ const generatePlan = (skills: Skill[]): PlanDay[] => {
             focus: "Strong Foundation",
             tasks: [
                 "Revise CS Fundamentals (OS, CN, DBMS)",
-                "Practice 20 Aptitude Questions",
-                "Review Resume Points",
-                "Mock Intro Pitch"
+                "Practice 20 Aptitude Questions (Time/Work, Profit/Loss)",
+                "Review Resume Points - be ready to explain every keyword",
+                "Mock Intro Pitch - 'Tell me about yourself'"
             ]
         },
         {
@@ -168,19 +174,19 @@ const generatePlan = (skills: Skill[]): PlanDay[] => {
             focus: "Problem Solving",
             tasks: [
                 "Solve 5 Easy + 3 Medium LeetCode problems",
-                "Revise Standard Algorithms (Sorting, Searching)",
-                "Implement Basic Data Structures from scratch",
+                "Revise Standard Algorithms (QuickSort, MergeSort, Binary Search)",
+                "Implement Basic Data Structures (LinkedList, Stack) from scratch",
                 "Time/Space Complexity Analysis drills"
             ]
         },
         {
-            day: "Day 5: Projects & Stack",
+            day: "Day 5: Project & Stack",
             focus: "Specialization",
             tasks: [
-                hasWeb ? "Review React/Node.js Lifecycle & Hooks" : "Review Primary Language Standard Library",
-                hasData ? "Practice SQL Queries (Joins, Indexing)" : "Review Database Concepts",
+                hasWeb ? "Review React/Node.js Lifecycle & Hooks / API Integration" : "Review Primary Language Standard Library & Collections",
+                hasData ? "Practice SQL Queries (Joins, Indexing, Group By)" : "Review Database Normalization & ACID",
                 "Deep dive into one complexity in your main project",
-                "Prepare answers for 'Challenges faced'"
+                "Prepare answers for 'Challenges faced in project'"
             ]
         },
         {
@@ -188,19 +194,19 @@ const generatePlan = (skills: Skill[]): PlanDay[] => {
             focus: "Interview Simulation",
             tasks: [
                 "Record yourself answering common HR questions",
-                "Peer Mock Interview",
-                hasCloud ? "Review Deployment & CI/CD flows" : "Review Testing basics",
-                "Prepare questions for the company"
+                "Peer Mock Interview (or talk to a rubber duck)",
+                hasCloud ? "Review Deployment, Docker basics & CI/CD flows" : (hasTesting ? "Review Testing Pyramids & Frameworks" : "Review Unit Testing basics"),
+                "Prepare 3 smart questions for the company"
             ]
         },
         {
             day: "Day 7: Revision",
             focus: "Confidence Building",
             tasks: [
-                "Review Weak Areas from previous days",
-                "Read Company Tech Blog/News",
-                "Rest & Mental Prep",
-                "Final Resume Glance"
+                "Review Weak Areas identified in previous days",
+                "Read Company Tech Blog/News or About Us page",
+                "Rest & Mental Prep - Sleep well",
+                "Final Resume Glance & Logistics check"
             ]
         }
     ];
@@ -216,41 +222,64 @@ const generateQuestions = (skills: Skill[]): string[] => {
         switch (skill.name.toLowerCase()) {
             case 'react':
             case 'next.js':
-                questions.push("Explain the Virtual DOM and Reconciliation process.");
-                questions.push("What is the difference between specialized Hooks and regular functions?");
+                questions.push("Explain the Virtual DOM and key benefits of React.");
+                questions.push("What is the difference between useEffect and useLayoutEffect?");
+                questions.push("How do you handle state management in complex apps?");
+                break;
+            case 'node.js':
+            case 'express':
+                questions.push("Explain the Event Loop in Node.js.");
+                questions.push("Difference between process.nextTick() and setImmediate().");
                 break;
             case 'java':
                 questions.push("Explain the internal working of HashMap in Java.");
-                questions.push("Difference between Abstract Class and Interface."); // Classic
+                questions.push("Difference between Abstract Class and Interface.");
+                questions.push("What are the new features in Java 8+ (Streams, Lambdas)?");
                 break;
             case 'python':
                 questions.push("How is memory managed in Python? Explain Garbage Collection.");
                 questions.push("Difference between list and tuple.");
+                questions.push("Explain decorators and how they work.");
                 break;
             case 'sql':
             case 'mysql':
             case 'postgresql':
-                questions.push("Explain Indexing and how it improves query performance.");
-                questions.push("What are ACID properties? Explain with examples.");
+                questions.push("Explain Indexing and when it helps vs hurts.");
+                questions.push("Difference between INNER JOIN and LEFT JOIN.");
+                questions.push("How would you optimize a slow query?");
+                break;
+            case 'mongodb':
+            case 'nosql':
+                questions.push("Difference between SQL and NoSQL databases.");
+                questions.push("Explain Aggregation Pipeline in MongoDB.");
                 break;
             case 'javascript':
             case 'typescript':
-                questions.push("Explain Event Loop and closures.");
+                questions.push("Explain Closures and Hoisting.");
                 questions.push("Difference between == and ===.");
+                questions.push("Explain Promises and async/await.");
                 break;
             case 'dsa':
             case 'algorithms':
                 questions.push("How would you optimize search in a sorted vs unsorted array?");
+                questions.push("Explain Dynamic Programming with an example.");
                 break;
             case 'aws':
             case 'cloud':
                 questions.push("Explain the difference between vertical and horizontal scaling.");
+                questions.push("What is a Load Balancer?");
                 break;
             case 'docker':
                 questions.push("Difference between Docker Image and Container.");
+                questions.push("Explain Docker Compose.");
                 break;
             case 'rest':
                 questions.push("Explain the difference between PUT and PATCH methods.");
+                questions.push("What are idempotent methods?");
+                break;
+            case 'git':
+            case 'github':
+                questions.push("Difference between git merge and git rebase.");
                 break;
             default:
                 // Generic for the category if not specific
@@ -265,8 +294,10 @@ const generateQuestions = (skills: Skill[]): string[] => {
         "Explain a project where you had to learn a new technology.",
         "What is your approach to debugging a slow application?",
         "Explain the request-response cycle of a web application.",
-        "What are SOLID principles?",
-        "Describe a time you failed and what you learned."
+        "What are SOLID principles? Explain with examples.",
+        "Describe a time you failed and what you learned.",
+        "How do you stay updated with latest technologies?",
+        "Explain the CAP theorem in distributed systems."
     ];
 
     let i = 0;
@@ -286,9 +317,11 @@ const STORAGE_KEY = 'placement_history';
 export const saveAnalysis = (result: AnalysisResult) => {
     const history = getHistory();
     history.unshift(result); // Add to top
-    // Limit history if needed? User didn't specify. Let's keep it unbounded for now or cap at 50 safely.
     if (history.length > 50) history.pop();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+
+    // Dispatch a custom event to notify listeners (like History page if open)
+    window.dispatchEvent(new Event('historyUpdated'));
 };
 
 export const getHistory = (): AnalysisResult[] => {

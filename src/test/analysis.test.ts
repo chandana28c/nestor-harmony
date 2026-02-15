@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { analyzeJD } from '../lib/analysisUtils';
+import { analyzeJD } from '@/lib/analysisUtils';
 
 describe('Placement Analysis Logic', () => {
     it('should extract skills correctly', () => {
