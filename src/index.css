@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,26 +6,26 @@
 
 @layer base {
   :root {
-    --background: 40 23% 96%;
-    --foreground: 0 0% 7%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 10%;
 
-    --card: 40 23% 96%;
-    --card-foreground: 0 0% 7%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
 
-    --popover: 40 23% 96%;
-    --popover-foreground: 0 0% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
 
-    --primary: 0 100% 27%;
+    --primary: 245 58% 51%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 12% 90%;
-    --secondary-foreground: 0 0% 7%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 10%;
 
-    --muted: 40 12% 92%;
-    --muted-foreground: 40 5% 46%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
 
-    --accent: 40 12% 90%;
-    --accent-foreground: 0 0% 7%;
+    --accent: 245 58% 96%;
+    --accent-foreground: 245 58% 51%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -36,20 +36,20 @@
     --warning: 38 35% 52%;
     --warning-foreground: 0 0% 7%;
 
-    --border: 40 12% 85%;
-    --input: 40 12% 85%;
-    --ring: 0 100% 27%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 245 58% 51%;
 
-    --radius: 0.375rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 40 23% 96%;
-    --sidebar-foreground: 0 0% 7%;
-    --sidebar-primary: 0 100% 27%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 12% 90%;
-    --sidebar-accent-foreground: 0 0% 7%;
-    --sidebar-border: 40 12% 85%;
-    --sidebar-ring: 0 100% 27%;
+    --sidebar-background: 245 58% 51%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 245 58% 51%;
+    --sidebar-accent: 245 58% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 245 40% 60%;
+    --sidebar-ring: 0 0% 100%;
   }
 }
 
@@ -62,24 +62,12 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
     font-size: 16px;
-    line-height: 1.7;
+    line-height: 1.6;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Lora', serif;
-    letter-spacing: -0.01em;
-    line-height: 1.2;
-  }
-}
-
-@layer utilities {
-  .font-serif {
-    font-family: 'Lora', serif;
-  }
-  .font-sans {
     font-family: 'Inter', sans-serif;
-  }
-  .text-prose {
-    max-width: 720px;
+    font-weight: 700;
+    line-height: 1.2;
   }
 }
