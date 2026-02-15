@@ -1,0 +1,42 @@
+:root {
+    /* Color System */
+    --color-bg: #F7F6F3;
+    --color-text: #111111;
+    --color-accent: #8B0000;
+    --color-accent-hover: #A60000;
+    --color-success: #4A6E4D;
+    --color-warning: #9C7C38;
+    --color-border: #E0E0E0;
+    --color-card-bg: #FFFFFF;
+
+    /* Typography */
+    --font-serif: 'Georgia', 'Times New Roman', serif;
+    /* Placeholder for premium serif */
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+    --text-base: 16px;
+    --text-lg: 18px;
+    --text-xl: 24px;
+    --text-2xl: 32px;
+    --text-3xl: 48px;
+
+    --leading-tight: 1.2;
+    --leading-base: 1.6;
+    --leading-loose: 1.8;
+
+    /* Spacing System */
+    --space-8: 8px;
+    --space-16: 16px;
+    --space-24: 24px;
+    --space-40: 40px;
+    --space-64: 64px;
+
+    /* Animation */
+    --transition-fast: 150ms ease-in-out;
+    --transition-medium: 200ms ease-in-out;
+
+    /* UI Elements */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --border-width: 1px;
+}
