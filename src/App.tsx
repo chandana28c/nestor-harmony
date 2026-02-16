@@ -13,6 +13,8 @@ import Profile from "./pages/Profile";
 import History from "./pages/History";
 import Results from "./pages/Results";
 import NotFound from "./pages/NotFound";
+import TestPage from "./pages/TestPage";
+import ShipPage from "./pages/ShipPage";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +26,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/prp/07-test" element={<TestPage />} />
+          <Route path="/prp/08-ship" element={<ShipPage />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="practice" element={<Practice />} />
