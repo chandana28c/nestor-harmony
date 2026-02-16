@@ -425,7 +425,15 @@ export const getHistory = (): AnalysisResult[] => {
 
 export const getAnalysis = (id: string): AnalysisResult | undefined => {
     const history = getHistory();
-    return history.find(item => item.id === id);
+    const found = history.find(item => item.id === id);
+
+    // Legacy Data Hydration: If old analysis lacks intel, generate it on the fly
+    if (found && !found.companyIntel) {
+        found.companyIntel = generateCompanyIntel(found.company || '', found.role || '');
+        found.roundMapping = generateRoundMapping(found.companyIntel.size, found.extractedSkills || []);
+    }
+
+    return found;
 };
 
 export const updateAnalysis = (result: AnalysisResult) => {
