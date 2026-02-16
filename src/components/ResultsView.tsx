@@ -148,6 +148,62 @@ const ResultsView: React.FC<ResultsViewProps> = ({ result, onResultChange }) => 
                 </CardContent>
             </Card>
 
+            {/* Company Intel & Round Mapping */}
+            {result.companyIntel && (
+                <div className="grid md:grid-cols-3 gap-6">
+                    <Card className="md:col-span-1 border-blue-500/20 shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                                    <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                Company Intel
+                            </CardTitle>
+                            <CardDescription>AI-driven insights (Demo Mode)</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <h4 className="text-sm font-medium text-muted-foreground">Size Category</h4>
+                                <Badge variant={result.companyIntel.size === 'Enterprise' ? 'default' : 'secondary'} className="mt-1">
+                                    {result.companyIntel.size}
+                                </Badge>
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-medium text-muted-foreground">Likely Industry</h4>
+                                <p className="font-medium text-foreground">{result.companyIntel.industry}</p>
+                            </div>
+                            <div className="bg-muted p-3 rounded-md">
+                                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Hiring DNA</h4>
+                                <p className="text-sm italic text-foreground/80">"{result.companyIntel.hiringFocus}"</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="md:col-span-2">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                                    <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                </div>
+                                Expected Interview Roadmap
+                            </CardTitle>
+                            <CardDescription>Based on company size ({result.companyIntel.size}) and role</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="relative border-l-2 border-muted ml-3 space-y-8 py-2">
+                                {result.roundMapping?.map((round, idx) => (
+                                    <div key={idx} className="relative pl-8">
+                                        <div className="absolute -left-[9px] top-1 h-4 w-4 rounded-full bg-background border-2 border-primary ring-2 ring-background" />
+                                        <h4 className="font-semibold text-base text-primary">{round.stage}: {round.name}</h4>
+                                        <p className="text-sm text-muted-foreground mt-1 max-w-xl">{round.description}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
             {/* Skills Detected - interactive toggles */}
             <Card>
                 <CardHeader>

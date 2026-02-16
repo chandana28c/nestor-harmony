@@ -19,6 +19,19 @@ export interface ChecklistRound {
 export type SkillConfidence = 'know' | 'practice';
 export type SkillConfidenceMap = Record<string, SkillConfidence>;
 
+export interface CompanyIntel {
+    name: string;
+    industry: string;
+    size: 'Startup' | 'Mid-size' | 'Enterprise';
+    hiringFocus: string;
+}
+
+export interface RoundStep {
+    stage: string;
+    name: string;
+    description: string;
+}
+
 export interface AnalysisResult {
     id: string;
     createdAt: string;
@@ -34,6 +47,10 @@ export interface AnalysisResult {
     skillConfidenceMap?: SkillConfidenceMap;
     /** Original JD-derived score; used to compute live score with skill adjustments. */
     baseReadinessScore?: number;
+    /** Heuristic company intelligence */
+    companyIntel?: CompanyIntel;
+    /** Predicted interview rounds */
+    roundMapping?: RoundStep[];
 }
 
 const SKILL_KEYWORDS: Record<string, string[]> = {
@@ -45,6 +62,15 @@ const SKILL_KEYWORDS: Record<string, string[]> = {
     'Testing': ['Selenium', 'Cypress', 'Playwright', 'Jest', 'Mocha', 'Chai', 'JUnit', 'PyTest', 'TestNG']
 };
 
+const KNOWN_GIANTS = [
+    'google', 'amazon', 'microsoft', 'meta', 'facebook', 'apple', 'netflix',
+    'tcs', 'infosys', 'wipro', 'hcl', 'accenture', 'capgemini', 'cognizant',
+    'ibm', 'oracle', 'cisco', 'intel', 'adobe', 'salesforce', 'sap', 'dell',
+    'hp', 'lenovo', 'samsung', 'flipkart', 'uber', 'ola', 'swiggy', 'zomato',
+    'paytm', 'phonepe', 'walmart', 'target', 'goldman sachs', 'jpmorgan',
+    'morgan stanley', 'wells fargo', 'american express'
+];
+
 export const analyzeJD = (jdText: string, company: string = '', role: string = ''): AnalysisResult => {
     const extractedSkills: Skill[] = [];
     const lowerJD = jdText.toLowerCase();
@@ -52,11 +78,8 @@ export const analyzeJD = (jdText: string, company: string = '', role: string = '
     // 1. Skill Extraction
     Object.entries(SKILL_KEYWORDS).forEach(([category, keywords]) => {
         keywords.forEach(keyword => {
-            // Use word boundary to avoid partial matches (e.g., "Go" in "Google")
-            // Escape special characters in keyword if any (simple approach for now)
             const regex = new RegExp(`\\b${keyword.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
             if (regex.test(lowerJD)) {
-                // Check if already added to avoid duplicates
                 if (!extractedSkills.some(s => s.name === keyword)) {
                     extractedSkills.push({ name: keyword, category: category as any });
                 }
@@ -64,14 +87,10 @@ export const analyzeJD = (jdText: string, company: string = '', role: string = '
         });
     });
 
-    // If no skills found, still show "General fresher stack" implies we don't fail, just return empty skills or handle in generation.
-
     // 2. Readiness Score Calculation
     let score = 35; // Base
     const categoriesPresent = new Set(extractedSkills.map(s => s.category));
     score += categoriesPresent.size * 5; // +5 per category
-
-    // Cap category bonus at 30? logic: 6 categories * 5 = 30. So max bonus is naturally 30.
 
     if (company.trim()) score += 10;
     if (role.trim()) score += 10;
@@ -88,10 +107,15 @@ export const analyzeJD = (jdText: string, company: string = '', role: string = '
     // 5. Generate Questions
     const questions = generateQuestions(extractedSkills);
 
+    // 6. Generate Company Intel & Rounds
+    const companyIntel = generateCompanyIntel(company, role);
+    const roundMapping = generateRoundMapping(companyIntel.size, extractedSkills);
+
     const skillConfidenceMap: SkillConfidenceMap = {};
     extractedSkills.forEach(s => { skillConfidenceMap[s.name] = 'practice'; });
     const baseScore = score;
     const initialLiveScore = Math.max(0, Math.min(100, baseScore + 2 * 0 - 2 * extractedSkills.length));
+
     const result: AnalysisResult = {
         id: uuidv4(),
         createdAt: new Date().toISOString(),
@@ -104,10 +128,61 @@ export const analyzeJD = (jdText: string, company: string = '', role: string = '
         checklist,
         questions,
         skillConfidenceMap,
-        baseReadinessScore: baseScore
+        baseReadinessScore: baseScore,
+        companyIntel,
+        roundMapping
     };
 
     return result;
+};
+
+const generateCompanyIntel = (company: string, role: string): CompanyIntel => {
+    const lowerName = company.toLowerCase();
+    const isGiant = KNOWN_GIANTS.some(giant => lowerName.includes(giant));
+
+    // Heuristic Industry Guess
+    let industry = "Technology Services";
+    if (lowerName.includes('bank') || lowerName.includes('financial') || lowerName.includes('capital')) industry = "Banking & Finance";
+    else if (lowerName.includes('health') || lowerName.includes('pharma')) industry = "Healthcare Tech";
+    else if (lowerName.includes('retail') || lowerName.includes('commerce')) industry = "E-Commerce / Retail";
+    else if (lowerName.includes('auto') || lowerName.includes('motor')) industry = "Automotive Tech";
+
+    if (isGiant) {
+        return {
+            name: company,
+            industry,
+            size: 'Enterprise',
+            hiringFocus: "Strong emphasis on DSA, CS Fundamentals, and scalable system design. Expect standardized processes."
+        };
+    } else {
+        return {
+            name: company,
+            industry,
+            size: 'Startup', // Default for unknown
+            hiringFocus: "Speed of delivery, practical problem solving, and immediate stack utility. Culture fit is crucial."
+        };
+    }
+};
+
+const generateRoundMapping = (size: 'Startup' | 'Mid-size' | 'Enterprise', skills: Skill[]): RoundStep[] => {
+    const hasDSA = skills.some(s => s.category === 'Core CS');
+    const hasWeb = skills.some(s => s.category === 'Web');
+
+    if (size === 'Enterprise') {
+        return [
+            { stage: "Round 1", name: "Online Assessment", description: "Automated test on HackerRank/Mettl. Expect 2 DSA questions (Arrays/Strings) + 20 Aptitude MCQs." },
+            { stage: "Round 2", name: "Technical Interview 1", description: "DSA-heavy. Live coding of standard algorithms (Trees, Graphs, DP). Deep dive into Time Complexity." },
+            { stage: "Round 3", name: "Technical Interview 2", description: `${hasWeb ? 'System Design & Projects' : 'Core CS & Low Level Design'}. Discussion on your resume projects and DB schema design.` },
+            { stage: "Round 4", name: "Managerial / HR", description: "Behavioral alignment. Questions on longevity, relocation, and 'Why this company?'." }
+        ];
+    } else {
+        // Startup / Mid-size
+        return [
+            { stage: "Round 1", name: "Screening / Assignment", description: "Likely a take-home assignment or a practical pair-programming session. focus on clean code and functionality." },
+            { stage: "Round 2", name: "Technical Deep Dive", description: `Discussions on ${hasWeb ? 'React/Node patterns' : 'Development frameworks'}, async programming, and API design. Whiteboarding a feature.` },
+            { stage: "Round 3", name: "Culture Fit & Founder", description: "Discussion on product vision, your adaptability, and 'wearing multiple hats'. Be ready to show passion." }
+        ];
+    }
 };
 
 const generateChecklist = (skills: Skill[]): ChecklistRound[] => {
