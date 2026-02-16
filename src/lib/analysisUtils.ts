@@ -1,8 +1,14 @@
+
 import { v4 as uuidv4 } from 'uuid';
 
-export interface Skill {
-    name: string;
-    category: 'Core CS' | 'Languages' | 'Web' | 'Data' | 'Cloud/DevOps' | 'Testing';
+export interface ExtractedSkills {
+    coreCS: string[];
+    languages: string[];
+    web: string[];
+    data: string[];
+    cloud: string[];
+    testing: string[];
+    other: string[];
 }
 
 export interface PlanDay {
@@ -12,8 +18,8 @@ export interface PlanDay {
 }
 
 export interface ChecklistRound {
-    roundName: string;
-    topics: string[];
+    roundName: string; // mapped from roundTitle in user req, keeping consistent with code
+    topics: string[]; // mapped from items
 }
 
 export type SkillConfidence = 'know' | 'practice';
@@ -35,31 +41,28 @@ export interface RoundStep {
 export interface AnalysisResult {
     id: string;
     createdAt: string;
+    updatedAt: string;
     company: string;
     role: string;
     jdText: string;
-    extractedSkills: Skill[];
-    readinessScore: number;
-    plan: PlanDay[];
+    extractedSkills: ExtractedSkills;
+    roundMapping: RoundStep[];
     checklist: ChecklistRound[];
+    plan: PlanDay[]; // mapped from plan7Days
     questions: string[];
-    /** User self-assessment: "know" | "practice" per skill. Defaults to "practice". */
-    skillConfidenceMap?: SkillConfidenceMap;
-    /** Original JD-derived score; used to compute live score with skill adjustments. */
-    baseReadinessScore?: number;
-    /** Heuristic company intelligence */
+    baseScore: number;
+    skillConfidenceMap: SkillConfidenceMap;
+    finalScore: number;
     companyIntel?: CompanyIntel;
-    /** Predicted interview rounds */
-    roundMapping?: RoundStep[];
 }
 
-const SKILL_KEYWORDS: Record<string, string[]> = {
-    'Core CS': ['DSA', 'Data Structures', 'Algorithms', 'OOP', 'Object Oriented', 'DBMS', 'Database Management', 'OS', 'Operating Systems', 'Networks', 'Computer Networks'],
-    'Languages': ['Java', 'Python', 'JavaScript', 'TypeScript', 'C', 'C++', 'C#', 'Go', 'Golang', 'Rust', 'Ruby', 'PHP', 'Swift', 'Kotlin'],
-    'Web': ['React', 'Next.js', 'Node.js', 'Express', 'Vue', 'Angular', 'HTML', 'CSS', 'Tailwind', 'Bootstrap', 'Sass', 'Less', 'REST', 'GraphQL', 'API'],
-    'Data': ['SQL', 'MySQL', 'PostgreSQL', 'MongoDB', 'NoSQL', 'Redis', 'Cassandra', 'Oracle', 'SQLite', 'Firebase', 'Supabase'],
-    'Cloud/DevOps': ['AWS', 'Amazon Web Services', 'Azure', 'GCP', 'Google Cloud', 'Docker', 'Kubernetes', 'CI/CD', 'Jenkins', 'GitHub Actions', 'GitLab CI', 'Linux', 'Bash', 'Shell'],
-    'Testing': ['Selenium', 'Cypress', 'Playwright', 'Jest', 'Mocha', 'Chai', 'JUnit', 'PyTest', 'TestNG']
+const SKILL_KEYWORDS: Record<keyof Omit<ExtractedSkills, 'other'>, string[]> = {
+    'coreCS': ['DSA', 'Data Structures', 'Algorithms', 'OOP', 'Object Oriented', 'DBMS', 'Database Management', 'OS', 'Operating Systems', 'Networks', 'Computer Networks'],
+    'languages': ['Java', 'Python', 'JavaScript', 'TypeScript', 'C', 'C++', 'C#', 'Go', 'Golang', 'Rust', 'Ruby', 'PHP', 'Swift', 'Kotlin'],
+    'web': ['React', 'Next.js', 'Node.js', 'Express', 'Vue', 'Angular', 'HTML', 'CSS', 'Tailwind', 'Bootstrap', 'Sass', 'Less', 'REST', 'GraphQL', 'API'],
+    'data': ['SQL', 'MySQL', 'PostgreSQL', 'MongoDB', 'NoSQL', 'Redis', 'Cassandra', 'Oracle', 'SQLite', 'Firebase', 'Supabase'],
+    'cloud': ['AWS', 'Amazon Web Services', 'Azure', 'GCP', 'Google Cloud', 'Docker', 'Kubernetes', 'CI/CD', 'Jenkins', 'GitHub Actions', 'GitLab CI', 'Linux', 'Bash', 'Shell'],
+    'testing': ['Selenium', 'Cypress', 'Playwright', 'Jest', 'Mocha', 'Chai', 'JUnit', 'PyTest', 'TestNG']
 };
 
 const KNOWN_GIANTS = [
@@ -72,25 +75,45 @@ const KNOWN_GIANTS = [
 ];
 
 export const analyzeJD = (jdText: string, company: string = '', role: string = ''): AnalysisResult => {
-    const extractedSkills: Skill[] = [];
+    const extractedSkills: ExtractedSkills = {
+        coreCS: [],
+        languages: [],
+        web: [],
+        data: [],
+        cloud: [],
+        testing: [],
+        other: []
+    };
     const lowerJD = jdText.toLowerCase();
+    let totalSkillCount = 0;
 
     // 1. Skill Extraction
-    Object.entries(SKILL_KEYWORDS).forEach(([category, keywords]) => {
+    (Object.entries(SKILL_KEYWORDS) as [keyof ExtractedSkills, string[]][]).forEach(([category, keywords]) => {
         keywords.forEach(keyword => {
             const regex = new RegExp(`\\b${keyword.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
             if (regex.test(lowerJD)) {
-                if (!extractedSkills.some(s => s.name === keyword)) {
-                    extractedSkills.push({ name: keyword, category: category as any });
+                if (!extractedSkills[category].includes(keyword)) {
+                    extractedSkills[category].push(keyword);
+                    totalSkillCount++;
                 }
             }
         });
     });
 
-    // 2. Readiness Score Calculation
+    // Default behavior if no skills detected
+    if (totalSkillCount === 0) {
+        extractedSkills.other = ["Communication", "Problem solving", "Basic coding", "Projects"];
+        totalSkillCount = 4;
+    }
+
+    // 2. Score Calculation
     let score = 35; // Base
-    const categoriesPresent = new Set(extractedSkills.map(s => s.category));
-    score += categoriesPresent.size * 5; // +5 per category
+    let categoriesCount = 0;
+    (Object.values(extractedSkills) as string[][]).forEach(list => {
+        if (list.length > 0) categoriesCount++;
+    });
+
+    score += categoriesCount * 5;
 
     if (company.trim()) score += 10;
     if (role.trim()) score += 10;
@@ -98,49 +121,58 @@ export const analyzeJD = (jdText: string, company: string = '', role: string = '
 
     if (score > 100) score = 100;
 
-    // 3. Generate Checklist
+    // 3. Generate Artifacts
+    // Flatten skills for generation helpers
+    const allSkillsList: { name: string, category: string }[] = [];
+    Object.entries(extractedSkills).forEach(([cat, list]) => {
+        list.forEach(name => allSkillsList.push({ name, category: cat }));
+    });
+
     const checklist = generateChecklist(extractedSkills);
-
-    // 4. Generate 7-Day Plan
     const plan = generatePlan(extractedSkills);
+    const questions = generateQuestions(allSkillsList);
 
-    // 5. Generate Questions
-    const questions = generateQuestions(extractedSkills);
-
-    // 6. Generate Company Intel & Rounds
     const companyIntel = generateCompanyIntel(company, role);
     const roundMapping = generateRoundMapping(companyIntel.size, extractedSkills);
 
     const skillConfidenceMap: SkillConfidenceMap = {};
-    extractedSkills.forEach(s => { skillConfidenceMap[s.name] = 'practice'; });
+    Object.values(extractedSkills).flat().forEach(s => { skillConfidenceMap[s] = 'practice'; });
+
+    // Initial live score
     const baseScore = score;
-    const initialLiveScore = Math.max(0, Math.min(100, baseScore + 2 * 0 - 2 * extractedSkills.length));
+    // Initial final score: Base + 2*Know(0) - 2*Practice(All)
+    // Actually, logic was: base + 2*know - 2*practice.
+    // If base is 100, and 10 skills are practice, score = 80.
+    const finalScore = Math.max(0, Math.min(100, baseScore - 2 * totalSkillCount));
 
     const result: AnalysisResult = {
         id: uuidv4(),
         createdAt: new Date().toISOString(),
-        company: company.trim() || 'Unknown Company',
-        role: role.trim() || 'Software Engineer',
+        updatedAt: new Date().toISOString(),
+        company: company.trim() || '',
+        role: role.trim() || '',
         jdText,
         extractedSkills,
-        readinessScore: initialLiveScore,
-        plan,
+        roundMapping,
         checklist,
+        plan,
         questions,
+        input_questions: questions, // Compatibility fallback if needed or just use questions
+        baseScore,
         skillConfidenceMap,
-        baseReadinessScore: baseScore,
-        companyIntel,
-        roundMapping
+        finalScore,
+        companyIntel
     };
 
     return result;
 };
 
+// ... Helper generation functions need to adapt to ExtractedSkills object ...
+
 const generateCompanyIntel = (company: string, role: string): CompanyIntel => {
     const lowerName = company.toLowerCase();
     const isGiant = KNOWN_GIANTS.some(giant => lowerName.includes(giant));
 
-    // Heuristic Industry Guess
     let industry = "Technology Services";
     if (lowerName.includes('bank') || lowerName.includes('financial') || lowerName.includes('capital')) industry = "Banking & Finance";
     else if (lowerName.includes('health') || lowerName.includes('pharma')) industry = "Healthcare Tech";
@@ -158,15 +190,15 @@ const generateCompanyIntel = (company: string, role: string): CompanyIntel => {
         return {
             name: company,
             industry,
-            size: 'Startup', // Default for unknown
+            size: 'Startup',
             hiringFocus: "Speed of delivery, practical problem solving, and immediate stack utility. Culture fit is crucial."
         };
     }
 };
 
-const generateRoundMapping = (size: 'Startup' | 'Mid-size' | 'Enterprise', skills: Skill[]): RoundStep[] => {
-    const hasDSA = skills.some(s => s.category === 'Core CS');
-    const hasWeb = skills.some(s => s.category === 'Web');
+const generateRoundMapping = (size: 'Startup' | 'Mid-size' | 'Enterprise', skills: ExtractedSkills): RoundStep[] => {
+    const hasDSA = skills.coreCS.length > 0;
+    const hasWeb = skills.web.length > 0;
 
     if (size === 'Enterprise') {
         return [
@@ -176,7 +208,6 @@ const generateRoundMapping = (size: 'Startup' | 'Mid-size' | 'Enterprise', skill
             { stage: "Round 4", name: "Managerial / HR", description: "Behavioral alignment. Questions on longevity, relocation, and 'Why this company?'." }
         ];
     } else {
-        // Startup / Mid-size
         return [
             { stage: "Round 1", name: "Screening / Assignment", description: "Likely a take-home assignment or a practical pair-programming session. focus on clean code and functionality." },
             { stage: "Round 2", name: "Technical Deep Dive", description: `Discussions on ${hasWeb ? 'React/Node patterns' : 'Development frameworks'}, async programming, and API design. Whiteboarding a feature.` },
@@ -185,12 +216,9 @@ const generateRoundMapping = (size: 'Startup' | 'Mid-size' | 'Enterprise', skill
     }
 };
 
-const generateChecklist = (skills: Skill[]): ChecklistRound[] => {
-    // Helper to get skills by category
-    const getSkills = (cat: string) => skills.filter(s => s.category === cat).map(s => s.name);
-
-    const dsaSkills = getSkills('Core CS');
-    const langSkills = getSkills('Languages');
+const generateChecklist = (skills: ExtractedSkills): ChecklistRound[] => {
+    const dsaSkills = skills.coreCS;
+    const langSkills = skills.languages;
 
     return [
         {
@@ -219,8 +247,8 @@ const generateChecklist = (skills: Skill[]): ChecklistRound[] => {
             roundName: "Round 3: Technical Interview",
             topics: [
                 "Deep dive into Resume Projects",
-                `System Design Basics${skills.some(s => s.category === 'Web') ? ' (Web Architecture, API Design)' : ''}`,
-                ...skills.slice(0, 3).map(s => `Explain ${s.name} concepts in depth`),
+                `System Design Basics${skills.web.length > 0 ? ' (Web Architecture, API Design)' : ''}`,
+                ...skills.web.slice(0, 3).map(s => `Explain ${s} concepts in depth`),
                 "Database Normalization & ACID Properties",
                 "Live Coding (1-2 medium problems)",
                 "Code Quality & Optimization discussion"
@@ -240,11 +268,11 @@ const generateChecklist = (skills: Skill[]): ChecklistRound[] => {
     ];
 };
 
-const generatePlan = (skills: Skill[]): PlanDay[] => {
-    const hasWeb = skills.some(s => s.category === 'Web');
-    const hasData = skills.some(s => s.category === 'Data');
-    const hasCloud = skills.some(s => s.category === 'Cloud/DevOps');
-    const hasTesting = skills.some(s => s.category === 'Testing');
+const generatePlan = (skills: ExtractedSkills): PlanDay[] => {
+    const hasWeb = skills.web.length > 0;
+    const hasData = skills.data.length > 0;
+    const hasCloud = skills.cloud.length > 0;
+    const hasTesting = skills.testing.length > 0;
 
     return [
         {
@@ -300,7 +328,7 @@ const generatePlan = (skills: Skill[]): PlanDay[] => {
     ];
 };
 
-const generateQuestions = (skills: Skill[]): string[] => {
+const generateQuestions = (skills: { name: string, category: string }[]): string[] => {
     const questions: string[] = [];
 
     // Specific skill-based questions
@@ -308,6 +336,7 @@ const generateQuestions = (skills: Skill[]): string[] => {
         if (questions.length >= 10) return;
 
         switch (skill.name.toLowerCase()) {
+            // ... same switch case as before, just adapted ...
             case 'react':
             case 'next.js':
                 questions.push("Explain the Virtual DOM and key benefits of React.");
@@ -370,12 +399,10 @@ const generateQuestions = (skills: Skill[]): string[] => {
                 questions.push("Difference between git merge and git rebase.");
                 break;
             default:
-                // Generic for the category if not specific
                 break;
         }
     });
 
-    // Fill remaining with generic high-quality questions
     const genericQuestions = [
         "Tell me about a challenging bug you fixed.",
         "How do you handle conflicts in a team?",
@@ -404,19 +431,29 @@ const STORAGE_KEY = 'placement_history';
 
 export const saveAnalysis = (result: AnalysisResult) => {
     const history = getHistory();
-    history.unshift(result); // Add to top
+    history.unshift(result);
     if (history.length > 50) history.pop();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-
-    // Dispatch a custom event to notify listeners (like History page if open)
     window.dispatchEvent(new Event('historyUpdated'));
+};
+
+const isValidAnalysisResult = (item: any): item is AnalysisResult => {
+    // Basic schema check
+    return item &&
+        typeof item.id === 'string' &&
+        typeof item.finalScore === 'number' &&
+        typeof item.extractedSkills === 'object' &&
+        !Array.isArray(item.extractedSkills); // strict check for new schema
 };
 
 export const getHistory = (): AnalysisResult[] => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return [];
     try {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (!Array.isArray(parsed)) return [];
+        // Filter out corrupted/legacy entries that don't match strict schema
+        return parsed.filter(isValidAnalysisResult);
     } catch (e) {
         console.error("Failed to parse history", e);
         return [];
@@ -425,21 +462,14 @@ export const getHistory = (): AnalysisResult[] => {
 
 export const getAnalysis = (id: string): AnalysisResult | undefined => {
     const history = getHistory();
-    const found = history.find(item => item.id === id);
-
-    // Legacy Data Hydration: If old analysis lacks intel, generate it on the fly
-    if (found && !found.companyIntel) {
-        found.companyIntel = generateCompanyIntel(found.company || '', found.role || '');
-        found.roundMapping = generateRoundMapping(found.companyIntel.size, found.extractedSkills || []);
-    }
-
-    return found;
+    return history.find(item => item.id === id);
 };
 
 export const updateAnalysis = (result: AnalysisResult) => {
     const history = getHistory();
     const idx = history.findIndex(item => item.id === result.id);
     if (idx >= 0) {
+        result.updatedAt = new Date().toISOString();
         history[idx] = result;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
         window.dispatchEvent(new Event('historyUpdated'));

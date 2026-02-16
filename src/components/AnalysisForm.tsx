@@ -30,6 +30,8 @@ const AnalysisForm = () => {
         navigate(`/dashboard/results?id=${result.id}`);
     };
 
+    const isTitleTooShort = jdText.trim().length > 0 && jdText.trim().length < 200;
+
     return (
         <Card className="w-full shadow-md border-primary/20 bg-background/60 backdrop-blur-xl">
             <CardHeader>
@@ -63,14 +65,19 @@ const AnalysisForm = () => {
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="jd">Job Description</Label>
+                    <Label htmlFor="jd">Job Description <span className="text-red-500">*</span></Label>
                     <Textarea
                         id="jd"
                         placeholder="Paste the full JD here..."
-                        className="min-h-[150px]"
+                        className={`min-h-[150px] ${isTitleTooShort ? 'border-yellow-500 focus-visible:ring-yellow-500' : ''}`}
                         value={jdText}
                         onChange={(e) => setJdText(e.target.value)}
                     />
+                    {isTitleTooShort && (
+                        <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">
+                            Warning: This JD is too short to analyze deeply. Paste full JD for better output.
+                        </p>
+                    )}
                 </div>
             </CardContent>
             <CardFooter>
