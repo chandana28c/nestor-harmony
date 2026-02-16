@@ -10,6 +10,7 @@ const navItems = [
   { title: "Resources", to: "/dashboard/resources", icon: FolderOpen },
   { title: "History", to: "/dashboard/history", icon: History },
   { title: "Profile", to: "/dashboard/profile", icon: User },
+  { title: "QA Checklist", to: "/prp/07-test", icon: ClipboardCheck },
 ];
 
 const DashboardLayout = () => {
