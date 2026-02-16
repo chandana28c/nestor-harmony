@@ -92,7 +92,6 @@ export const analyzeJD = (jdText: string, company: string = '', role: string = '
     extractedSkills.forEach(s => { skillConfidenceMap[s.name] = 'practice'; });
     const baseScore = score;
     const initialLiveScore = Math.max(0, Math.min(100, baseScore + 2 * 0 - 2 * extractedSkills.length));
-
     const result: AnalysisResult = {
         id: uuidv4(),
         createdAt: new Date().toISOString(),
