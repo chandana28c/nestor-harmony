@@ -1,5 +1,5 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, BookOpen, ClipboardCheck, FolderOpen, User, History } from "lucide-react";
+import { LayoutDashboard, BookOpen, ClipboardCheck, FolderOpen, User, History, Rocket } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -11,6 +11,7 @@ const navItems = [
   { title: "History", to: "/dashboard/history", icon: History },
   { title: "Profile", to: "/dashboard/profile", icon: User },
   { title: "QA Checklist", to: "/prp/07-test", icon: ClipboardCheck },
+  { title: "Proof & Ship", to: "/prp/proof", icon: Rocket },
 ];
 
 const DashboardLayout = () => {
